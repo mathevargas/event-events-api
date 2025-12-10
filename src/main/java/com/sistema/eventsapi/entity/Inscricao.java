@@ -20,5 +20,7 @@ public class Inscricao {
 
     @Column(nullable = false)
     private String status; // usado para check-in ou status geral
-}
 
+    @Column(name = "email_usuario", nullable = true)
+    private String emailUsuario; // <-- necessário para envio de e-mail
+}

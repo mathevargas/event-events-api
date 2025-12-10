@@ -28,7 +28,6 @@ public class EventoServiceImpl implements EventoService {
         evento.setDescricao(requisicao.getDescricao());
         evento.setLocal(requisicao.getLocal());
         evento.setData(requisicao.getData());
-        evento.setLimiteVagas(null);  // Limite de vagas removido
         evento.setStatus("ATIVO");
 
         eventoRepository.save(evento);
@@ -61,7 +60,6 @@ public class EventoServiceImpl implements EventoService {
         evento.setDescricao(requisicao.getDescricao());
         evento.setLocal(requisicao.getLocal());
         evento.setData(requisicao.getData());
-        evento.setLimiteVagas(null);  // Limite de vagas removido
         evento.setStatus(requisicao.getStatus());
 
         eventoRepository.save(evento);
@@ -85,7 +83,6 @@ public class EventoServiceImpl implements EventoService {
         resp.setDescricao(evento.getDescricao());
         resp.setLocal(evento.getLocal());
         resp.setData(evento.getData());
-        resp.setLimiteVagas(evento.getLimiteVagas()); // Limite de vagas removido
         resp.setStatus(evento.getStatus());
         return resp;
     }

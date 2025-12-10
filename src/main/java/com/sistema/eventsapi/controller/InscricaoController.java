@@ -22,18 +22,25 @@ public class InscricaoController {
 
     @PostMapping
     @Operation(summary = "Inscrever-se em evento", description = "Endpoint para realizar inscrição no evento")
-    public ResponseEntity<InscricaoResposta> inscrever(@RequestBody InscricaoRequisicao req) {
+    public ResponseEntity<InscricaoResposta> inscrever(
+            @RequestBody InscricaoRequisicao req,
+            @RequestHeader("Authorization") String token
+    ) {
         String emailLogado = (String) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
-        return ResponseEntity.ok(inscricaoService.inscrever(req, emailLogado));
+
+        return ResponseEntity.ok(inscricaoService.inscrever(req, emailLogado, token));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Cancelar inscrição", description = "Endpoint para cancelar a inscrição no evento")
-    public ResponseEntity<Void> cancelar(@PathVariable Long id) {
-        inscricaoService.cancelar(id);
+    public ResponseEntity<Void> cancelar(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String token
+    ) {
+        inscricaoService.cancelar(id, token);
         return ResponseEntity.noContent().build();
     }
 

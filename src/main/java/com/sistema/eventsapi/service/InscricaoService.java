@@ -7,9 +7,11 @@ import java.util.List;
 
 public interface InscricaoService {
 
-    InscricaoResposta inscrever(InscricaoRequisicao requisicao, String emailUsuario);
+    // Agora recebe também o token JWT
+    InscricaoResposta inscrever(InscricaoRequisicao requisicao, String emailUsuario, String tokenJwt);
 
-    void cancelar(Long idInscricao);
+    // Cancelamento também precisa do token
+    void cancelar(Long idInscricao, String tokenJwt);
 
     List<InscricaoResposta> listarPorEvento(Long eventoId);
 

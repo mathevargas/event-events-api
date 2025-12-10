@@ -1,4 +1,4 @@
-package com.sistema.authapi.security;
+package com.sistema.eventsapi.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -22,15 +22,6 @@ public class JwtServico {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String gerarToken(String email) {
-        return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
     public String validarToken(String token) {
         try {
             return Jwts.parserBuilder()
@@ -42,5 +33,14 @@ public class JwtServico {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public String gerarToken(String email) {
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 }

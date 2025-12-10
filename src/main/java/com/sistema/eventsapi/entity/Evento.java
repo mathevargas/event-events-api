@@ -27,8 +27,5 @@ public class Evento {
     private LocalDateTime data;
 
     @Column(nullable = false)
-    private Integer limiteVagas;
-
-    @Column(nullable = false)
     private String status; // "ATIVO", "ENCERRADO"
 }

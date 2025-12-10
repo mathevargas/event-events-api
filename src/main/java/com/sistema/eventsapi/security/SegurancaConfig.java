@@ -1,50 +1,62 @@
-package com.sistema.authapi.security;
+package com.sistema.eventsapi.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
 public class SegurancaConfig {
 
-    private final com.sistema.authapi.security.JwtFiltro jwtFiltro;
+    private final JwtFiltro jwtFiltro;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // API REST NÃO USA SESSION
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(sess ->
-                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // ROTAS LIBERADAS
+
+                        // 📌 Rotas públicas
+                        .requestMatchers(HttpMethod.GET, "/eventos").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/eventos/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(
-                                "/auth/**",               // cadastro e login
-                                "/v3/api-docs/**",        // swagger json
-                                "/swagger-ui/**",         // ui
-                                "/swagger-ui.html"        // raiz swagger
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
                         ).permitAll()
 
-                        // RESTANTE PRECISA TOKEN
+                        // 🚀 Rotas offline usadas pela Gate API → SEM TOKEN
+                        .requestMatchers(HttpMethod.POST, "/inscricoes/offline").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/presencas/offline").permitAll()
+
+                        // 🔒 Rotas normalizadas → exigem autenticação
+                        .requestMatchers("/inscricoes/**").authenticated()
+                        .requestMatchers("/presencas/**").authenticated()
+                        .requestMatchers("/checkin/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
-                // JWT ENTRA ANTES DO FILTRO PADRÃO
                 .addFilterBefore(jwtFiltro, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

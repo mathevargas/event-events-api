@@ -9,7 +9,6 @@ public class EventoAtualizarRequisicao {
     private String descricao;
     private String local;
     private LocalDateTime data;
-    private Integer limiteVagas;
     private String status; // ATIVO / ENCERRADO
 }
 

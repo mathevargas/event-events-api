@@ -24,6 +24,9 @@ public class PresencaServiceImpl implements PresencaService {
     private final InscricaoRepository inscricaoRepository;
     private final EventoRepository eventoRepository;
 
+    // =============================
+    // ✔ ONLINE (portal / admin)
+    // =============================
     @Override
     public PresencaResposta registrar(PresencaRequisicao req) {
 
@@ -37,19 +40,43 @@ public class PresencaServiceImpl implements PresencaService {
             throw new ApiException("Inscrição não pertence ao evento", HttpStatus.BAD_REQUEST);
         }
 
-        // Aqui podemos ou não mudar status; normalmente o checkin já cuida disso
-        inscricao.setStatus("PRESENTE");
-        inscricaoRepository.save(inscricao);
+        marcarPresencaEAtualizarEvento(evento, inscricao, false);
 
-        // Cria presença
-        Presenca presenca = new Presenca();
-        presenca.setEventoId(evento.getId());
-        presenca.setUsuarioId(inscricao.getUsuarioId());
-        presenca.setOffline(req.getOffline() != null ? req.getOffline() : Boolean.FALSE);
-
-        presencaRepository.save(presenca);
+        Presenca presenca = salvarPresenca(evento.getId(), inscricao.getUsuarioId(), false);
 
         return mapear(presenca);
+    }
+
+    // =============================
+    // 🚀 OFFLINE (GATE sincroniza depois)
+    // =============================
+    @Override
+    public void registrarOffline(PresencaRequisicao req) {
+
+        Evento evento = eventoRepository.findById(req.getEventoId())
+                .orElseThrow(() -> new ApiException("Evento não encontrado", HttpStatus.NOT_FOUND));
+
+        // 🔍 Aqui a diferença: buscar pela combinação
+        Inscricao inscricao = inscricaoRepository
+                .findByEmailUsuarioAndEventoId(req.getEmailUsuario(), req.getEventoId())
+                .orElseThrow(() -> new ApiException("Usuário não inscrito neste evento", HttpStatus.NOT_FOUND));
+
+        marcarPresencaEAtualizarEvento(evento, inscricao, true);
+
+        salvarPresenca(evento.getId(), inscricao.getUsuarioId(), true);
+    }
+
+    private void marcarPresencaEAtualizarEvento(Evento evento, Inscricao inscricao, boolean offline) {
+        inscricao.setStatus("PRESENTE");
+        inscricaoRepository.save(inscricao);
+    }
+
+    private Presenca salvarPresenca(Long eventoId, Long usuarioId, boolean offline) {
+        Presenca presenca = new Presenca();
+        presenca.setEventoId(eventoId);
+        presenca.setUsuarioId(usuarioId);
+        presenca.setOffline(offline);
+        return presencaRepository.save(presenca);
     }
 
     @Override
