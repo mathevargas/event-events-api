@@ -8,6 +8,7 @@ import com.sistema.eventsapi.exception.ApiException;
 import com.sistema.eventsapi.repository.EventoRepository;
 import com.sistema.eventsapi.repository.InscricaoRepository;
 import com.sistema.eventsapi.service.InscricaoService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -20,15 +21,16 @@ public class InscricaoServiceImpl implements InscricaoService {
 
     private final InscricaoRepository inscricaoRepository;
     private final EventoRepository eventoRepository;
+    private final WebClient emailClient;
 
-    private final WebClient emailClient = WebClient.builder()
-            .baseUrl("http://localhost:8002")
-            .build();
-
-    public InscricaoServiceImpl(InscricaoRepository inscricaoRepository,
-                                EventoRepository eventoRepository) {
+    public InscricaoServiceImpl(
+            InscricaoRepository inscricaoRepository,
+            EventoRepository eventoRepository,
+            @Value("${email.api.url:http://localhost:8002}") String emailApiUrl
+    ) {
         this.inscricaoRepository = inscricaoRepository;
         this.eventoRepository = eventoRepository;
+        this.emailClient = WebClient.builder().baseUrl(emailApiUrl).build();
     }
 
     @Override
@@ -99,7 +101,7 @@ public class InscricaoServiceImpl implements InscricaoService {
     }
 
     @Override
-    public List<InscricaoResposta> listarPorEvento(Long eventoId) {
+    public java.util.List<InscricaoResposta> listarPorEvento(Long eventoId) {
         return inscricaoRepository.findByEventoId(eventoId)
                 .stream()
                 .map(this::mapear)
@@ -107,7 +109,7 @@ public class InscricaoServiceImpl implements InscricaoService {
     }
 
     @Override
-    public List<InscricaoResposta> listarPorUsuario(Long usuarioId) {
+    public java.util.List<InscricaoResposta> listarPorUsuario(Long usuarioId) {
         return inscricaoRepository.findByUsuarioId(usuarioId)
                 .stream()
                 .map(this::mapear)
@@ -124,11 +126,8 @@ public class InscricaoServiceImpl implements InscricaoService {
     }
 
     private void enviarEmailAssincrono(String email, String eventoTitulo, String assunto, String mensagem, String tokenJwt) {
-        if (email == null || tokenJwt == null) {
-            return;
-        }
+        if (email == null || tokenJwt == null) return;
 
-        // 🔥 Envio assíncrono — NÃO trava a resposta para o front!
         emailClient.post()
                 .uri("/emails/enviar-html")
                 .header("Authorization", "Bearer " + tokenJwt)
@@ -138,7 +137,7 @@ public class InscricaoServiceImpl implements InscricaoService {
                         "mensagem", mensagem
                 ))
                 .retrieve()
-                .toBodilessEntity()  // não precisa processar retorno
-                .subscribe(); // ⬅ dispara sem bloquear
+                .toBodilessEntity()
+                .subscribe();
     }
 }

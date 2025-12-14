@@ -11,19 +11,27 @@ import com.sistema.eventsapi.repository.InscricaoRepository;
 import com.sistema.eventsapi.repository.PresencaRepository;
 import com.sistema.eventsapi.service.CheckinService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class CheckinServiceImpl implements CheckinService {
+
+    @Value("${email.api.url:http://localhost:8002}")
+    private String emailApiUrl;
+
 
     private final PresencaRepository presencaRepository;
     private final InscricaoRepository inscricaoRepository;
     private final EventoRepository eventoRepository;
 
     @Override
-    public CheckinResponse registrar(CheckinRequest req, String emailUsuario) {
+    public CheckinResponse registrar(CheckinRequest req, String emailUsuario, String tokenJwtHeader) {
 
         // Valida evento
         Evento evento = eventoRepository.findById(req.getEventoId())
@@ -49,6 +57,14 @@ public class CheckinServiceImpl implements CheckinService {
 
         presencaRepository.save(presenca);
 
+        // e-mail de comparecimento (check-in)
+        String tokenJwt = tokenJwtHeader;
+        if (tokenJwt != null && tokenJwt.startsWith("Bearer ")) tokenJwt = tokenJwt.substring(7);
+        enviarEmailAssincrono(emailUsuario, "Check-in confirmado",
+                "<p>Seu comparecimento no evento <strong>" + evento.getTitulo() + "</strong> foi registrado.</p>",
+                tokenJwt);
+
+
         // Monta resposta
         CheckinResponse resp = new CheckinResponse();
         resp.setPresencaId(presenca.getId());
@@ -58,5 +74,24 @@ public class CheckinServiceImpl implements CheckinService {
         resp.setStatus("PRESENTE");
 
         return resp;
+    }
+
+    private void enviarEmailAssincrono(String email, String assunto, String mensagem, String tokenJwt) {
+        if (email == null || tokenJwt == null) return;
+
+        WebClient.builder()
+                .baseUrl(emailApiUrl)
+                .build()
+                .post()
+                .uri("/emails/enviar-html")
+                .header("Authorization", "Bearer " + tokenJwt)
+                .bodyValue(Map.of(
+                        "destinatario", email,
+                        "assunto", assunto,
+                        "mensagem", mensagem
+                ))
+                .retrieve()
+                .toBodilessEntity()
+                .subscribe();
     }
 }

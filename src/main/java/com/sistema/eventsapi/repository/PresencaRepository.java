@@ -8,4 +8,7 @@ import java.util.List;
 public interface PresencaRepository extends JpaRepository<Presenca, Long> {
 
     List<Presenca> findByEventoId(Long eventoId);
+
+    boolean existsByEventoIdAndUsuarioId(Long eventoId, Long usuarioId);
 }
+

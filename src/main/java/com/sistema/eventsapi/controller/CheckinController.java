@@ -1,6 +1,5 @@
 package com.sistema.eventsapi.controller;
 
-
 import com.sistema.eventsapi.dto.CheckinRequest;
 import com.sistema.eventsapi.dto.CheckinResponse;
 import com.sistema.eventsapi.service.CheckinService;
@@ -11,24 +10,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
 @RequestMapping("/checkin")
 @RequiredArgsConstructor
-@Tag(name = "Check-in", description = "Operações relacionadas ao check-in nos eventos")
+@Tag(name = "Check-in", description = "Endpoints de registro de presença (check-in)")
 public class CheckinController {
-
 
     private final CheckinService checkinService;
 
-
     @PostMapping
     @Operation(summary = "Registrar check-in", description = "Endpoint para registrar o check-in no evento")
-    public ResponseEntity<CheckinResponse> registrar(@RequestBody CheckinRequest req) {
+    public ResponseEntity<CheckinResponse> registrar(
+            @RequestBody CheckinRequest req,
+            @RequestHeader(value = "Authorization", required = false) String token
+    ) {
         String emailLogado = (String) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
-        return ResponseEntity.ok(checkinService.registrar(req, emailLogado));
+
+        return ResponseEntity.ok(checkinService.registrar(req, emailLogado, token));
     }
 }

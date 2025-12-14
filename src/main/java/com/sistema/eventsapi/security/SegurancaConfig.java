@@ -31,22 +31,19 @@ public class SegurancaConfig {
                         // 📌 Rotas públicas
                         .requestMatchers(HttpMethod.GET, "/eventos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/eventos/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // 🚀 Rotas offline usadas pela Gate API → SEM TOKEN
-                        .requestMatchers(HttpMethod.POST, "/inscricoes/offline").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/presencas/offline").permitAll()
+                        // 🔐 Rotas de sincronização (Portaria) — só ADMIN/PORTEIRO
+                        .requestMatchers("/offline/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PORTEIRO")
 
-                        // 🔒 Rotas normalizadas → exigem autenticação
-                        .requestMatchers("/inscricoes/**").authenticated()
-                        .requestMatchers("/presencas/**").authenticated()
-                        .requestMatchers("/checkin/**").authenticated()
+                        // legado (se ainda usar)
+                        .requestMatchers(HttpMethod.POST, "/presencas/offline").hasAnyAuthority("ROLE_ADMIN", "ROLE_PORTEIRO")
 
+                        // 🔒 Demais rotas exigem autenticação
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFiltro, UsernamePasswordAuthenticationFilter.class);

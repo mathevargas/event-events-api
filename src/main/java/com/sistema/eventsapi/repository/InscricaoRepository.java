@@ -14,6 +14,8 @@ public interface InscricaoRepository extends JpaRepository<Inscricao, Long> {
 
     boolean existsByEventoIdAndUsuarioId(Long eventoId, Long usuarioId);
 
+    java.util.Optional<Inscricao> findByEventoIdAndUsuarioId(Long eventoId, Long usuarioId);
+
     // 🚀 Usado pela GATE no modo offline (email + evento)
     Optional<Inscricao> findByEmailUsuarioAndEventoId(String emailUsuario, Long eventoId);
 }
